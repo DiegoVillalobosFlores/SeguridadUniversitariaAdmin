@@ -1,4 +1,6 @@
 <resources>
     <string name="app_name">Seguridad Admin</string>
     <string name="title_activity_maps">Map</string>
+    <string name="API_URL">http://148.202.152.33</string>
+    <string name="API_GET_REPORTES">/incidencias/listaSuceso.php</string>
 </resources>
