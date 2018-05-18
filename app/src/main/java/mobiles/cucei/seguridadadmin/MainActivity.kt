@@ -23,6 +23,7 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.onesignal.OneSignal
 import kotlinx.android.synthetic.main.activity_main.*
 import mobiles.cucei.seguridadadmin.Adapters.Incident
 import mobiles.cucei.seguridadadmin.DataClasses.Incidente
@@ -44,38 +45,55 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        OneSignal.startInit(this)
+                .inFocusDisplaying(OneSignal.OSInFocusDisplayOption.Notification)
+                .unsubscribeWhenNotificationsAreDisabled(true)
+                .init()
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         val url = getString(R.string.API_URL) + getString(R.string.API_GET_REPORTES)
         url.httpGet().responseObject { request: Request, response: Response, result: Result<ArrayList<Incidente>, FuelError> ->
 
-            incidentes = result.get()
-            Log.wtf("Incidentes",incidentes.toString())
+            Log.d("Incidentes RESU",result.toString())
+            Log.d("Incidentes REQ",request.toString())
+            Log.d("Incidentes RES",response.toString())
 
-            viewManager = LinearLayoutManager(this)
-            viewAdapter = Incident(incidentes, {incident: Incidente -> onIncidentClicked(incident) })
+            when(response.statusCode){
+                200 -> {
 
-            recyclerView = findViewById<RecyclerView>(R.id.main_recycler_incident).apply {
-                // use this setting to improve performance if you know that changes
-                // in content do not change the layout size of the RecyclerView
-                setHasFixedSize(true)
+                    Log.wtf("Incidentes",result.get().toString())
 
-                // use a linear layout manager
-                layoutManager = viewManager
+                    incidentes = result.get()
+                    viewManager = LinearLayoutManager(this)
+                    viewAdapter = Incident(incidentes, {incident: Incidente -> onIncidentClicked(incident) })
 
-                // specify an viewAdapter (see also next example)
-                adapter = viewAdapter
+                    Log.wtf("Incidentes","RECYCLER")
 
+                    recyclerView = findViewById<RecyclerView>(R.id.main_recycler_incident).apply {
+                        // use this setting to improve performance if you know that changes
+                        // in content do not change the layout size of the RecyclerView
+                        setHasFixedSize(true)
+
+                        // use a linear layout manager
+                        layoutManager = viewManager
+
+                        // specify an viewAdapter (see also next example)
+                        adapter = viewAdapter
+
+                        isNestedScrollingEnabled = false
+
+                    }
+
+                    for (incident:Incidente in incidentes){
+                        incident.place = LatLng(incident.latitud,incident.longitud)
+                    }
+
+                    val mapFragment = supportFragmentManager
+                            .findFragmentById(R.id.main_map) as SupportMapFragment
+                    mapFragment.getMapAsync(this)
+                }
             }
-
-            for (incident:Incidente in incidentes){
-                incident.place = LatLng(incident.latitud,incident.longitud)
-            }
-
-            val mapFragment = supportFragmentManager
-                    .findFragmentById(R.id.main_map) as SupportMapFragment
-            mapFragment.getMapAsync(this)
         }
     }
 
@@ -129,7 +147,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.d("Incidente",incidente.toString())
             mMap.addMarker(MarkerOptions().position(incidente.place).title(incidente.lugar))
         }
-
 
         setUpMap()
     }

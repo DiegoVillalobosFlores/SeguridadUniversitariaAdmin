@@ -8,6 +8,7 @@ data class Incidente (var latitud:Double = 0.0,
                       var suceso: String = "",
                       var nombre: String = "",
                       var fecha: String = "",
-                      var lugar: String = "") : Serializable {
+                      var lugar: String = "",
+                      var id:String = "") : Serializable {
     var place = LatLng(latitud,longitud)
 }
